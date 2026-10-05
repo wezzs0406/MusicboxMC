@@ -50,7 +50,15 @@ describe('litematic 组装与回读', () => {
     size: { x: 4, y: 3, z: 2 },
     blocks: [
       { x: 0, y: 2, z: 0, state: { name: 'minecraft:redstone_wire', properties: { power: '15' } } },
-      { x: 0, y: 1, z: 0, state: { name: 'minecraft:note_block', properties: { note: '12', powered: 'false' } } },
+      {
+        x: 0,
+        y: 1,
+        z: 0,
+        state: {
+          name: 'minecraft:note_block',
+          properties: { instrument: 'harp', note: '12', powered: 'false' },
+        },
+      },
       { x: 0, y: 0, z: 0, state: { name: 'minecraft:grass_block' } },
       { x: 1, y: 2, z: 0, state: { name: 'minecraft:repeater', properties: { facing: 'east', delay: '4', locked: 'false', powered: 'false' } } },
     ],
@@ -91,6 +99,7 @@ describe('litematic 组装与回读', () => {
     expect(at(0, 2, 0).name).toBe('minecraft:redstone_wire');
     expect(at(0, 2, 0).properties?.power).toBe('15');
     expect(at(0, 1, 0).name).toBe('minecraft:note_block');
+    expect(at(0, 1, 0).properties?.instrument).toBe('harp');
     expect(at(0, 1, 0).properties?.note).toBe('12');
     expect(at(0, 0, 0).name).toBe('minecraft:grass_block');
     expect(at(1, 2, 0).properties?.delay).toBe('4');

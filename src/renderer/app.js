@@ -435,6 +435,10 @@ const BLOCK_COLORS = {
   'minecraft:dirt': '#7a5230',
   'minecraft:grass_block': '#4e8f3d',
   'minecraft:bedrock': '#4a4a52',
+  'minecraft:oak_planks': '#b98556',
+  'minecraft:white_wool': '#e7e5df',
+  'minecraft:clay': '#b98f84',
+  'minecraft:gold_block': '#d8b443',
 };
 
 const FALLBACK_COLORS = ['#b8795f', '#8f9a72', '#c39a64', '#a58270', '#9b8d72', '#7e9690'];
@@ -465,6 +469,10 @@ function displayBlockName(block) {
     'minecraft:dirt': '泥土音色',
     'minecraft:grass_block': '草方块音色',
     'minecraft:bedrock': '基岩音色',
+    'minecraft:oak_planks': '木板 · 低音钢琴',
+    'minecraft:white_wool': '羊毛 · 低中音钢琴',
+    'minecraft:clay': '黏土 · 高中音钢琴',
+    'minecraft:gold_block': '金块 · 高音钢琴',
   };
   return names[block] || shortName(block);
 }

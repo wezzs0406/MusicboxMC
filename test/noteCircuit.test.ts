@@ -205,4 +205,15 @@ describe('音符电路几何（新拓扑：音符盒内联主线，分支行中�
       expect(nb).toBe(notes.length);
     }
   });
+
+  it('音符盒显式写入资源包所需的 instrument blockstate', () => {
+    const res = layout(song([{ tick: 0, midi: 30 }, { tick: 2, midi: 54 }, { tick: 4, midi: 78 }]), {
+      config: cfg,
+      regions: DEFAULT_REGIONS,
+    });
+    const instruments = res.tracks[0]!.placements
+      .filter((p) => p.block === 'minecraft:note_block')
+      .map((p) => p.props?.instrument);
+    expect(instruments).toEqual(['bass', 'guitar', 'flute']);
+  });
 });

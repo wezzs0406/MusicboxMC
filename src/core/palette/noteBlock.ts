@@ -1,5 +1,7 @@
 /** 音符盒方块状态序列化。 */
 
+import type { NoteBlockInstrument } from './pitchMap';
+
 export interface BlockState {
   /** 完整方块 id，如 minecraft:note_block */
   name: string;
@@ -9,11 +11,11 @@ export interface BlockState {
 
 export const AIR: BlockState = { name: 'minecraft:air' };
 
-/** 音符盒：note 档位 0-24。 */
-export function noteBlock(note: number): BlockState {
+/** 音符盒：note 档位 0-24，并显式写入 instrument，避免粘贴后回落到 harp。 */
+export function noteBlock(note: number, instrument: NoteBlockInstrument = 'harp'): BlockState {
   return {
     name: 'minecraft:note_block',
-    properties: { note: String(clampNote(note)), powered: 'false' },
+    properties: { instrument, note: String(clampNote(note)), powered: 'false' },
   };
 }
 

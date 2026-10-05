@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "npm run build && electron dist/src/main/index.js",
     "cli": "tsx scripts/cli.ts",
+    "resourcepack:check": "node scripts/check-piano-pack.mjs",
     "test": "vitest run"
   },
   "dependencies": {

@@ -9,7 +9,12 @@ import type {
   TrackSkeleton,
   Vec3,
 } from './types';
-import { mapPitch, type PitchRegion, type RegionTable } from '../palette/pitchMap';
+import {
+  mapPitch,
+  type NoteBlockInstrument,
+  type PitchRegion,
+  type RegionTable,
+} from '../palette/pitchMap';
 import type { BlockResolver } from '../palette/blockTable';
 
 /** 单个音符的时间/音高输入。tick 为游戏刻（默认 20/秒）。 */
@@ -260,6 +265,7 @@ interface NoteToPlace {
   note: number;
   region: PitchRegion;
   block: string;
+  instrument: NoteBlockInstrument;
   degraded: boolean;
 }
 
@@ -313,6 +319,7 @@ export function buildTrack(opts: BuildTrackOptions): {
       note: m.note,
       region: m.region,
       block: m.block,
+      instrument: m.instrument,
       degraded: m.degraded,
     });
   }
@@ -383,7 +390,11 @@ export function buildTrack(opts: BuildTrackOptions): {
     placements.push({
       pos: notePos,
       block: 'minecraft:note_block',
-      props: { note: String(n.note), powered: 'false' },
+      props: {
+        instrument: n.instrument,
+        note: String(n.note),
+        powered: 'false',
+      },
     });
     placements.push({
       pos: { x, y: opts.config.floorY, z },

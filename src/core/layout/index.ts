@@ -80,6 +80,8 @@ function regionDefaults(regions: RegionTable): BlockDefaults {
       A: { noteBase: regions.A.baseBlock },
       B: { noteBase: regions.B.baseBlock },
       C: { noteBase: regions.C.baseBlock },
+      D: { noteBase: regions.D.baseBlock },
+      E: { noteBase: regions.E.baseBlock },
     },
   };
 }

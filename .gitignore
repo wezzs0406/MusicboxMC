@@ -3,3 +3,8 @@ dist/
 *.litematic
 out/
 .workbuddy-ai/
+
+# Local reverse-engineering inputs and third-party binaries
+net26.2源码/
+*.jar
+钢琴全音域拓展.zip

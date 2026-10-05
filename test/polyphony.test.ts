@@ -161,7 +161,7 @@ describe('音组归并与音域处理', () => {
   });
 
   it('outOfRange=drop：超出音域的音丢弃并告警，其余照常落位', () => {
-    // B 区 54..78，A 区 30..54，C 区 78..102；midi 10 超出全部音区
+    // 默认 F#1..F#7 为 MIDI 30..102；midi 10 超出全部音区
     const res = buildTrack({
       trackIndex: 0,
       zBase: 0,
