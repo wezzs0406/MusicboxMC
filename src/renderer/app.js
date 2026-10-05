@@ -11,6 +11,7 @@ const state = {
   generated: null,
   busy: false,
   previewScale: 1,
+  previewRenderScale: 1,
 };
 
 /* ---------------- 日志 ---------------- */
@@ -476,6 +477,8 @@ const GUTTER = 150;
 const RULER = 28;
 /** 行头与刻度尺的底色 */
 const HEAD_BG = '#e9e7e2';
+/** Chromium 对单个 canvas 维度有限制；为长曲目预留安全余量。 */
+const MAX_CANVAS_PIXELS = 30000;
 
 /** 每个区域一个颜色，用于行头的音轨色条。 */
 const REGION_COLORS = ['#c97962', '#c29a65', '#879b79', '#ad8971', '#c58f9c', '#7d9690', '#aa9161'];
@@ -540,6 +543,7 @@ function renderPreview(res) {
   if (!preview || preview.size.x === 0) {
     canvas.width = 0;
     canvas.height = 0;
+    state.previewRenderScale = 1;
     hint.textContent = '尚未生成电路。';
     $('legend').replaceChildren();
     $('previewSize').textContent = '—';
@@ -551,10 +555,16 @@ function renderPreview(res) {
   }
 
   const { x, z } = preview.size;
-  const CELL = Math.max(16, Math.round(38 * state.previewScale));
+  const dpr = window.devicePixelRatio || 1;
+  const maxCssWidth = Math.max(640, MAX_CANVAS_PIXELS / Math.max(1, dpr));
+  const maxCell = (maxCssWidth - GUTTER) / Math.max(1, x);
+  const requestedCell = 38 * state.previewScale;
+  // 长曲目自动缩小到安全画布尺寸，避免 canvas.width 超过 Chromium 上限后整块空白。
+  const CELL = Math.max(1, Math.min(requestedCell, maxCell));
+  const renderScale = CELL / 38;
+  state.previewRenderScale = renderScale;
   const showGrid = $('showGrid').checked;
   const showNotes = $('showNotes').checked;
-  const dpr = window.devicePixelRatio || 1;
   const w = GUTTER + x * CELL;
   const h = RULER + z * CELL;
   const gridX0 = GUTTER;
@@ -838,7 +848,8 @@ function renderPreview(res) {
   $('previewBlocks').textContent = String(nonEmpty);
   hint.textContent =
     `一行 = 一个 Z 行，一列 = 一格 X（向右为时间）　·　${x}×${z} 格　·　` +
-    `${trackCount} 条音轨 / ${(res.regions || []).length} 个区域　·　可见方块 ${nonEmpty} 个`;
+    `${trackCount} 条音轨 / ${(res.regions || []).length} 个区域　·　可见方块 ${nonEmpty} 个` +
+    (renderScale < state.previewScale - 0.005 ? '　·　长曲目已自动缩小预览' : '');
 
   // 图例
   const legend = $('legend');
@@ -858,7 +869,8 @@ function renderPreview(res) {
 }
 
 function updatePreviewZoomLabel() {
-  $('previewZoom').textContent = `${Math.round(state.previewScale * 100)}%`;
+  const scale = state.generated ? state.previewRenderScale : state.previewScale;
+  $('previewZoom').textContent = `${Math.round(scale * 100)}%`;
 }
 
 function setPreviewScale(scale) {
