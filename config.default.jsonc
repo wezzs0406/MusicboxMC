@@ -1,0 +1,28 @@
+{
+  "targetMinecraftVersion": "1.20.4",
+  "baseTps": 20,
+  "layout": {
+    "axis": "x",
+    "skeletonY": 2,
+    "noteY": 1,
+    "blockY": 0,
+    "spacing": 2,
+    "dMax": 3,
+    "trackPitch": "auto",
+    "leadInCells": 3,
+    "maxSegmentCells": 4096,
+    "bridgeTicks": 2,
+    "maxRegionSize": 32
+  },
+  "tempo": { "source": "midi", "gridQuantize": "perBpm" },
+  "pitch": {
+    "extendRange": true,
+    "outOfRange": "warn",
+    "regions": {
+      "A": { "baseBlock": "minecraft:dirt", "baseMidi": 30 },
+      "B": { "baseBlock": "minecraft:grass_block", "baseMidi": 54 },
+      "C": { "baseBlock": "minecraft:bedrock", "baseMidi": 78 }
+    }
+  },
+  "speedPresets": [1.0, 0.75, 0.5, 1.5, 2.0]
+}

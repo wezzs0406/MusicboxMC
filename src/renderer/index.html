@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:;"
+    />
+    <meta name="color-scheme" content="light" />
+    <title>MusicboxMC</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand" aria-label="MusicboxMC">
+        <span class="logo" aria-hidden="true">♫</span>
+        <div>
+          <h1>MusicboxMC</h1>
+          <p>MIDI 转红石音乐投影</p>
+        </div>
+      </div>
+      <div class="topbar-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="workflowState">等待导入文件</span>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="workflow-card" aria-labelledby="workflow-title">
+        <div class="workflow-intro">
+          <p class="eyebrow">MUSICBOX WORKFLOW</p>
+          <h2 id="workflow-title">把 MIDI 变成可用的红石音乐投影</h2>
+          <p>先读取曲目，再调整电路参数，最后检查预览并导出。</p>
+        </div>
+        <ol class="workflow-steps" aria-label="转换流程">
+          <li class="flow-step active" id="stepImport">
+            <span class="flow-index">1</span>
+            <span><strong>导入</strong><small>选择 MIDI</small></span>
+          </li>
+          <li class="flow-line" aria-hidden="true"></li>
+          <li class="flow-step" id="stepSettings">
+            <span class="flow-index">2</span>
+            <span><strong>设置</strong><small>调整参数</small></span>
+          </li>
+          <li class="flow-line" aria-hidden="true"></li>
+          <li class="flow-step" id="stepPreview">
+            <span class="flow-index">3</span>
+            <span><strong>检查</strong><small>查看电路</small></span>
+          </li>
+          <li class="flow-line" aria-hidden="true"></li>
+          <li class="flow-step" id="stepExport">
+            <span class="flow-index">4</span>
+            <span><strong>导出</strong><small>生成投影</small></span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="source-card" aria-labelledby="source-title">
+        <div class="source-heading">
+          <div class="source-title">
+            <span class="source-icon" aria-hidden="true">↥</span>
+            <div>
+              <p class="eyebrow">SOURCE FILE</p>
+              <h2 id="source-title">选择一个 MIDI 文件</h2>
+            </div>
+          </div>
+          <span class="source-state" id="fileState">尚未选择文件</span>
+        </div>
+        <div class="filepick">
+          <label class="sr-only" for="filePath">MIDI 文件路径</label>
+          <input id="filePath" type="text" placeholder="拖入或粘贴 .mid / .midi 文件路径" spellcheck="false" />
+          <button id="btnBrowse" class="btn secondary" type="button"><span aria-hidden="true">⌕</span> 浏览文件</button>
+          <button id="btnAnalyze" class="btn dark" type="button">读取曲目</button>
+        </div>
+        <div class="source-foot">
+          <span>支持 MIDI 0/1 格式</span>
+          <span>读取只在本机进行，不会上传文件</span>
+        </div>
+      </section>
+
+      <div class="workspace-layout">
+        <aside class="control-panel" aria-label="生成设置">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">CONTROL PANEL</p>
+              <h2>生成设置</h2>
+            </div>
+            <span class="panel-state" id="controlState">等待解析</span>
+          </div>
+
+          <section class="control-section">
+            <div class="control-section-heading">
+              <span class="section-number">01</span>
+              <div>
+                <h3>播放与密度</h3>
+                <p>决定电路的速度和每个时刻的容量。</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="field">
+                <span class="label">基准 TPS</span>
+                <input id="baseTps" type="number" min="1" max="100" step="1" value="20" />
+                <small>每秒游戏刻数</small>
+              </label>
+              <label class="field">
+                <span class="label">复音上限 dMax</span>
+                <input id="dMax" type="number" min="1" max="14" step="1" value="14" />
+                <small>单侧最多行数</small>
+              </label>
+            </div>
+            <label class="field">
+              <span class="label">超出音域时</span>
+              <select id="outOfRange">
+                <option value="warn">提示并平移八度</option>
+                <option value="octave">自动平移八度</option>
+                <option value="clamp">夹到边界音</option>
+                <option value="drop">丢弃该音</option>
+              </select>
+              <small>默认优先保留旋律走向，必要时再夹取或丢弃。</small>
+            </label>
+            <label class="switch-row">
+              <span>
+                <span class="label">合并同乐器音轨</span>
+                <small>相同乐器合成一条主线，减少空间漂移。</small>
+              </span>
+              <label class="switch">
+                <input id="mergeSameInstrument" type="checkbox" />
+                <span class="switch-ui" aria-hidden="true"></span>
+              </label>
+            </label>
+          </section>
+
+          <section class="control-section">
+            <div class="control-section-heading">
+              <span class="section-number">02</span>
+              <div>
+                <h3>保留哪些音轨</h3>
+                <p>取消勾选不想写入投影的音轨。</p>
+              </div>
+            </div>
+            <div id="trackList" class="tracklist">
+              <p class="empty-note">读取曲目后，这里会列出音轨。</p>
+            </div>
+          </section>
+
+          <section class="control-section output-section">
+            <div class="control-section-heading">
+              <span class="section-number">03</span>
+              <div>
+                <h3>输出投影</h3>
+                <p>生成适用于 Litematica 的文件。</p>
+              </div>
+            </div>
+            <label class="field">
+              <span class="label">作者</span>
+              <input id="author" type="text" value="MusicboxMC" />
+            </label>
+            <label class="field">
+              <span class="label">保存位置</span>
+              <input id="outputPath" type="text" placeholder="点击选择保存位置" spellcheck="false" />
+            </label>
+            <button id="btnSaveAs" class="btn secondary full" type="button"><span aria-hidden="true">↗</span> 选择保存位置</button>
+            <button id="btnGenerate" class="btn primary full" type="button" disabled><span aria-hidden="true">✦</span> 生成投影</button>
+          </section>
+        </aside>
+
+        <section class="workspace-panel" aria-label="结果工作区">
+          <header class="workspace-heading">
+            <div>
+              <p class="eyebrow">RESULTS</p>
+              <h2 id="workspaceTitle">还没有曲目</h2>
+              <p id="workspaceSubtitle">选择 MIDI 文件后，这里会显示曲目结构和电路结果。</p>
+            </div>
+            <div class="result-meta">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span id="resultStatus">等待解析</span>
+            </div>
+          </header>
+
+          <nav class="view-tabs" role="tablist" aria-label="结果视图">
+            <button class="tab active" data-tab="overview" role="tab" aria-selected="true">
+              <span class="tab-icon" aria-hidden="true">◌</span>曲目概览
+            </button>
+            <button class="tab" data-tab="preview" role="tab" aria-selected="false">
+              <span class="tab-icon" aria-hidden="true">⌘</span>电路预览
+            </button>
+            <button class="tab" data-tab="warnings" role="tab" aria-selected="false">
+              <span class="tab-icon" aria-hidden="true">!</span>需要注意 <span id="warnCount" class="badge">0</span>
+            </button>
+            <button class="tab" data-tab="log" role="tab" aria-selected="false">
+              <span class="tab-icon" aria-hidden="true">≡</span>运行记录
+            </button>
+          </nav>
+
+          <div class="tabbody">
+            <div class="tabpane active" id="pane-overview" role="tabpanel">
+              <div id="banner" class="banner hidden"></div>
+              <div class="empty-state" id="overview">
+                <div class="empty-icon" aria-hidden="true">♫</div>
+                <h3>先读取一首 MIDI 曲目</h3>
+                <p>读取后你会看到曲名、时长、音轨和节奏信息。确认参数后，再到电路预览检查布局。</p>
+                <span class="empty-step">下一步：点击上方“读取曲目”</span>
+              </div>
+            </div>
+
+            <div class="tabpane" id="pane-preview" role="tabpanel">
+              <div class="preview-shell">
+                <div class="previewbar">
+                  <div class="preview-heading">
+                    <p class="eyebrow">CIRCUIT VIEW</p>
+                    <h3>电路预览</h3>
+                    <p class="preview-subtitle">向右是时间，向下是不同音轨的空间排布。</p>
+                  </div>
+                  <div class="preview-actions" aria-label="预览工具">
+                    <div class="preview-toggle">
+                      <label class="check-control"><input id="showGrid" type="checkbox" checked /> <span>网格</span></label>
+                      <label class="check-control"><input id="showNotes" type="checkbox" checked /> <span>音符盒</span></label>
+                    </div>
+                    <div class="zoom-control" aria-label="缩放">
+                      <button id="previewZoomOut" class="icon-button" type="button" title="缩小预览" aria-label="缩小预览">−</button>
+                      <span id="previewZoom" class="zoom-label">100%</span>
+                      <button id="previewZoomIn" class="icon-button" type="button" title="放大预览" aria-label="放大预览">＋</button>
+                    </div>
+                    <button id="previewFit" class="btn secondary preview-fit" type="button" title="让电路适配当前窗口">
+                      <span aria-hidden="true">⌗</span> 适配窗口
+                    </button>
+                  </div>
+                </div>
+                <div class="preview-summary" id="previewSummary" aria-live="polite">
+                  <span class="summary-item"><strong id="previewSize">—</strong><span>网格尺寸</span></span>
+                  <span class="summary-item"><strong id="previewRegions">—</strong><span>区域</span></span>
+                  <span class="summary-item"><strong id="previewTracks">—</strong><span>音轨</span></span>
+                  <span class="summary-item"><strong id="previewBlocks">—</strong><span>可见方块</span></span>
+                </div>
+                <div class="canvaswrap" id="canvasWrap">
+                  <div class="canvas-stage"><canvas id="canvas"></canvas></div>
+                </div>
+                <div class="preview-footer">
+                  <p class="hint" id="previewHint">尚未生成电路。</p>
+                  <div class="legend" id="legend" aria-label="方块图例"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tabpane" id="pane-warnings" role="tabpanel">
+              <div class="subpane-heading">
+                <div>
+                  <p class="eyebrow">QUALITY CHECK</p>
+                  <h3>需要注意的地方</h3>
+                  <p>这里列出音域、时序和空间布局中可能影响结果的问题。</p>
+                </div>
+                <span class="subpane-note">生成后自动更新</span>
+              </div>
+              <div id="warnings" class="empty-state compact-empty">
+                <div class="empty-icon" aria-hidden="true">✓</div>
+                <h3>暂时没有问题</h3>
+                <p>读取或生成文件后，潜在的问题会显示在这里。</p>
+              </div>
+            </div>
+
+            <div class="tabpane" id="pane-log" role="tabpanel">
+              <div class="subpane-heading">
+                <div>
+                  <p class="eyebrow">ACTIVITY</p>
+                  <h3>运行记录</h3>
+                  <p>用于定位解析和生成过程中的细节。</p>
+                </div>
+                <span class="subpane-note">仅保留当前会话</span>
+              </div>
+              <pre id="log"></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

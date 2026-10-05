@@ -1,0 +1,25 @@
+{
+  "name": "musicboxmc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MIDI → Minecraft 红石音乐 .litematic 投影生成器",
+  "main": "dist/src/main/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "npm run build && electron dist/src/main/index.js",
+    "cli": "tsx scripts/cli.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28"
+  },
+  "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.64.0",
+    "@types/node": "^22.10.2",
+    "electron": "^33.3.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.litematic
+out/
+.workbuddy-ai/
