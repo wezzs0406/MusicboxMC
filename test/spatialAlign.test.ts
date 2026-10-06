@@ -179,6 +179,29 @@ describe('多轨空间对齐：X 由曲中时刻决定', () => {
     }
   });
 
+  it('同刻两轨的自然位置超过 10 格时，仍尽量补线共用 X 轴', () => {
+    // 密集轨在 rt=20 已经走得更远，稀疏轨的自然位置差超过旧窗口；
+    // 只要当前组的红石线槽位放得下，仍应把同刻音符列补到同一 X。
+    const res = layout(
+      song([
+        [2, 4, 6, 8, 10, 12, 14, 16, 18, 20].map((rt) => ({
+          tick: rt * 2,
+          midi: 60,
+        })),
+        [10, 20].map((rt) => ({ tick: rt * 2, midi: 67 })),
+      ]),
+      { config: cfg, regions: DEFAULT_REGIONS },
+    );
+    const a = noteXs(res, 0);
+    const b = noteXs(res, 1);
+
+    expect(Math.abs(a.find((sample) => sample.rt === 20)!.x - 20)).toBe(0);
+    expect(b.find((sample) => sample.rt === 20)?.x).toBe(
+      a.find((sample) => sample.rt === 20)?.x,
+    );
+    expect(res.warnings.some((w) => w.code === 'SPATIAL_DRIFT')).toBe(false);
+  });
+
   it('单轨曲目不产生多余补齐（参考线就是它自己）', () => {
     const notes = [];
     for (let rt = 1; rt <= 50; rt += 5) notes.push({ tick: rt * 2, midi: 60 });

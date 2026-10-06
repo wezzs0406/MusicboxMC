@@ -5,7 +5,6 @@ import {
   groupByTick,
   maxChordRows,
   naturalSamples,
-  SYNC_ALIGN_WINDOW_CELLS,
   type TrackNote,
   type XPlan,
 } from './track';
@@ -106,8 +105,10 @@ function buildXPlan(samples: Array<{ atRt: number; x: number; trackId: number }>
     else envelope.push({ atRt: s.atRt, x: max });
   }
 
-  // 只把“同一时刻确实有两条独立音轨落音”的采样标记为同步点。
-  // 若它们的自然 X 已在 10 格内，就把容差收紧到 0，强制共用音符列 X。
+  // 只要“同一时刻确实有两条独立音轨落音”，就把它标记为同步点。
+  // 同刻音符应该尽量共用 X 轴；自然位置差只决定补线是否可能完成，
+  // 不能再作为“不尝试对齐”的门槛。否则密集轨与稀疏轨在长曲后段
+  // 只要自然差超过检查窗口，就会稳定地落在不同轴上。
   for (let i = 0; i < sorted.length; ) {
     const atRt = sorted[i]!.atRt;
     const sameTime = [];
@@ -116,10 +117,7 @@ function buildXPlan(samples: Array<{ atRt: number; x: number; trackId: number }>
       i += 1;
     }
     const trackIds = new Set(sameTime.map((s) => s.trackId));
-    if (trackIds.size < 2) continue;
-    const xs = sameTime.map((s) => s.x);
-    const spread = Math.max(...xs) - Math.min(...xs);
-    if (spread <= SYNC_ALIGN_WINDOW_CELLS) synchronizedAtRts.add(atRt);
+    if (trackIds.size >= 2) synchronizedAtRts.add(atRt);
   }
 
   return {

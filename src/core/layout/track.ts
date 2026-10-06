@@ -122,8 +122,11 @@ export function gameTickToRedstone(tick: number): number {
 export const ALIGN_TOLERANCE_CELLS = 12;
 
 /**
- * 同时发声的不同音轨在这个距离内，强制把音符列放到同一 X 轴。
- * 这是空间上的可听性优化，不会修改中继器档位或音符触发时间。
+ * 历史兼容常量。
+ *
+ * 早期实现只在自然位置差不超过这个窗口时才强制共轴；现在同刻不同轨
+ * 一律尝试共轴，距离仅影响是否会产生 SPATIAL_DRIFT 告警，因此该值不再
+ * 作为同步判定门槛保留。
  */
 export const SYNC_ALIGN_WINDOW_CELLS = 10;
 
@@ -145,7 +148,7 @@ export const MAX_PAD_RUN = 13;
 export interface XPlan {
   /** 给定曲中时刻（含全曲前导的红刻）返回参考 X（音符列位置） */
   targetX(atRt: number): number;
-  /** 该时刻是否有多条独立音轨同时落音且处于同步距离窗口内 */
+  /** 该时刻是否有多条独立音轨同时落音，需要尽量共用 X 轴 */
   isSynchronized(atRt: number): boolean;
 }
 
@@ -443,7 +446,8 @@ export function buildTrack(opts: BuildTrackOptions): {
 
     // 空间对齐：本组音符列的自然 X，与共享参考线比较。
     // 只在偏差超过容差时补齐，且**只用红石线**（0 延迟）——不改中继器时值、
-    // 不跨轨接线、不靠补齐末端。补不下的部分如实报告。
+    // 不跨轨接线、不靠补齐末端。同步点的容差为 0，尽量让同刻音符共用 X；
+    // 若补线容量仍不足，则保留 SPATIAL_DRIFT 告警并报告无法消除的残差。
     // 只有 ≥4 音和弦才铺分线列（给外圈分支行供能），否则末级中继器直接接背后方块
     const tail = groupTailCells(g.notes.length);
     const noteXNatural = x + (first && rest > 0 ? 1 : 0) + restCells + (tail - 1);
