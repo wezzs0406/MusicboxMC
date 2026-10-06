@@ -102,7 +102,7 @@ export interface GenerateResult extends AnalyzeResult {
   outputPath?: string;
   /** 投影字节数 */
   bytes: number;
-  /** 超出可用音域的音符数；> 0 时前端必须提示装资源包（F-12） */
+  /** 需要在前端提示的、超出资源包音域（F#1-F#7）的音符数 */
   outOfRangeNotes: number;
   stats: {
     tickCount: number;

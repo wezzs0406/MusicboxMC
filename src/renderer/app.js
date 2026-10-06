@@ -345,8 +345,8 @@ function renderOverview(res) {
     if (res.outOfRangeNotes > 0) {
       banner(
         'warn',
-        `⚠ 资源包提醒：${res.outOfRangeNotes} 个音符超出原版可用音域。` +
-          `未加载 MusicboxMC 资源包时这些音会失真 —— 请安装资源包，或把「超音域处理」改为 clamp/drop。`,
+        `⚠ 音域提醒：${res.outOfRangeNotes} 个音符超出资源包音域 F#1-F#7。` +
+          `这些音符已按当前策略处理；八度移调和最近可用音会改变音高，跳过则不会写入这些音符。`,
       );
     }
   }
@@ -362,12 +362,20 @@ function fmtDuration(sec) {
 
 const WARN_TEXT = {
   POLYPHONY_EXCEEDED: (w) => `tick ${w.tick}：同 tick ${w.n} 个音，超过上限 ${w.limit}，已截断`,
-  OUT_OF_RANGE: (w) => `MIDI ${w.midi} 超出可用音域，处理方式：${w.action}`,
+  OUT_OF_RANGE: (w) =>
+    `MIDI ${w.midi} 超出资源包音域 F#1-F#7，处理方式：${OUT_OF_RANGE_ACTION_TEXT[w.action] || w.action}`,
   SEGMENT_HARD_CUT: (w) => `tick ${w.tick}：骨架被迫硬切分段`,
   LEAD_IN_USED: (w) => `tick ${w.tick}：用到了骨架前导段（乐曲开头的提前量）`,
   TIMING_ADJUSTED: (w) => `tick ${w.tick} 的音实际在 tick ${w.actual} 触发，偏移 ${w.actual - w.tick} tick`,
   TRACK_SPLIT: (w) => `tick ${w.tick}：${w.notes} 个音密集放不下，已自动拆到新音轨`,
   SPATIAL_DRIFT: (w) => `tick ${w.tick}：该处空间偏差 ${w.drift} 格，超出多轨对齐容差`,
+};
+
+const OUT_OF_RANGE_ACTION_TEXT = {
+  warn: '提示并八度移调',
+  octave: '自动八度移调',
+  clamp: '改用最近可用音',
+  drop: '跳过',
 };
 
 function warnSeverity(code) {
@@ -466,7 +474,7 @@ function displayBlockName(block) {
     'minecraft:redstone_wire': '红石线',
     'minecraft:repeater': '中继器',
     'minecraft:note_block': '音符盒',
-    'minecraft:dirt': '泥土音色',
+    'minecraft:dirt': '泥土 · 中音钢琴',
     'minecraft:grass_block': '草方块音色',
     'minecraft:bedrock': '基岩音色',
     'minecraft:oak_planks': '木板 · 低音钢琴',

@@ -109,19 +109,23 @@
               </label>
             </div>
             <label class="field">
-              <span class="label">超出音域时</span>
+              <span class="label">仍超出资源包音域时</span>
               <select id="outOfRange">
-                <option value="warn">提示并平移八度</option>
-                <option value="octave">自动平移八度</option>
-                <option value="clamp">夹到边界音</option>
-                <option value="drop">丢弃该音</option>
+                <option value="warn">提示并八度移调</option>
+                <option value="octave">自动八度移调</option>
+                <option value="clamp">改用最近可用音</option>
+                <option value="drop">跳过超出音域的音符</option>
               </select>
-              <small>默认优先保留旋律走向，必要时再夹取或丢弃。</small>
+              <small>
+                通过资源包扩展音域：会失去 bass、guitar、harp、flute、bell 五种原版音色，
+                改用钢琴采样，使音域达到 F#1-F#7（MIDI 30-102）。只有仍超出此范围的音符
+                才按上方策略处理。
+              </small>
             </label>
             <label class="switch-row">
               <span>
                 <span class="label">合并同乐器音轨</span>
-                <small>相同乐器合成一条主线，减少空间漂移。</small>
+                <small>相同乐器合成一条主线；同时发声且自然位置相差不超过 10 格的不同音轨会自动共轴。</small>
               </span>
               <label class="switch">
                 <input id="mergeSameInstrument" type="checkbox" />

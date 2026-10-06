@@ -5,6 +5,7 @@ import {
   groupByTick,
   maxChordRows,
   naturalSamples,
+  SYNC_ALIGN_WINDOW_CELLS,
   type TrackNote,
   type XPlan,
 } from './track';
@@ -93,9 +94,10 @@ function regionDefaults(regions: RegionTable): BlockDefaults {
  * 既不会出现"要后退/要压缩"的情况，也不需要改时值或跨轨接线。
  * 同一量化时刻的跨轨 X 差因此被限制在容差内，不会随曲长累积。
  */
-function buildXPlan(samples: Array<{ atRt: number; x: number }>): XPlan {
+function buildXPlan(samples: Array<{ atRt: number; x: number; trackId: number }>): XPlan {
   const sorted = [...samples].sort((a, b) => a.atRt - b.atRt);
   const envelope: Array<{ atRt: number; x: number }> = [];
+  const synchronizedAtRts = new Set<number>();
   let max = 0;
   for (const s of sorted) {
     max = Math.max(max, s.x);
@@ -103,6 +105,23 @@ function buildXPlan(samples: Array<{ atRt: number; x: number }>): XPlan {
     if (last && last.atRt === s.atRt) last.x = max;
     else envelope.push({ atRt: s.atRt, x: max });
   }
+
+  // 只把“同一时刻确实有两条独立音轨落音”的采样标记为同步点。
+  // 若它们的自然 X 已在 10 格内，就把容差收紧到 0，强制共用音符列 X。
+  for (let i = 0; i < sorted.length; ) {
+    const atRt = sorted[i]!.atRt;
+    const sameTime = [];
+    while (i < sorted.length && sorted[i]!.atRt === atRt) {
+      sameTime.push(sorted[i]!);
+      i += 1;
+    }
+    const trackIds = new Set(sameTime.map((s) => s.trackId));
+    if (trackIds.size < 2) continue;
+    const xs = sameTime.map((s) => s.x);
+    const spread = Math.max(...xs) - Math.min(...xs);
+    if (spread <= SYNC_ALIGN_WINDOW_CELLS) synchronizedAtRts.add(atRt);
+  }
+
   return {
     targetX(atRt: number): number {
       let lo = 0;
@@ -119,6 +138,9 @@ function buildXPlan(samples: Array<{ atRt: number; x: number }>): XPlan {
         }
       }
       return envelope.length === 0 ? 0 : envelope[hit]!.x;
+    },
+    isSynchronized(atRt: number): boolean {
+      return synchronizedAtRts.has(atRt);
     },
   };
 }
@@ -166,9 +188,14 @@ export function layout(song: SongModel, opts: LayoutOptions = {}): LayoutResult 
   const base = minRt === 0 ? 1 : 0;
 
   // 多轨空间对齐：X 由曲中时刻决定，取各轨自然 X 的上包络作共享参考线。
-  const samples: Array<{ atRt: number; x: number }> = [];
-  for (const { notes } of trackInputs) {
-    samples.push(...naturalSamples(notes, base, maxChordNotes));
+  const samples: Array<{ atRt: number; x: number; trackId: number }> = [];
+  for (const { index, notes } of trackInputs) {
+    samples.push(
+      ...naturalSamples(notes, base, maxChordNotes).map((sample) => ({
+        ...sample,
+        trackId: index,
+      })),
+    );
   }
   const plan = buildXPlan(samples);
 

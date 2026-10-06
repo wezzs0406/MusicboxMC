@@ -30,7 +30,7 @@ export const DEFAULT_BLOCK_TABLE: BlockTable = {
 /**
  * 默认值分两级：全局 + 音区。
  *
- * 音区级默认是必要的 —— 音符盒垫底方块本来就按音区不同（A/B/C 三区音色不同），
+ * 音区级默认是必要的 —— 音符盒垫底方块本来就按音区不同（A/B/C/D/E 五区音色不同），
  * 所以"默认值"本身就要能按 A/B/C/D/E 音区给。
  */
 export interface BlockDefaults {

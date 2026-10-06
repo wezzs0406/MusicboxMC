@@ -122,6 +122,12 @@ export function gameTickToRedstone(tick: number): number {
 export const ALIGN_TOLERANCE_CELLS = 12;
 
 /**
+ * 同时发声的不同音轨在这个距离内，强制把音符列放到同一 X 轴。
+ * 这是空间上的可听性优化，不会修改中继器档位或音符触发时间。
+ */
+export const SYNC_ALIGN_WINDOW_CELLS = 10;
+
+/**
  * 单个补齐段（纯红石线）的最大格数。
  *
  * 信号强度 15，末端给中继器/音符盒供电需 ≥1，故留 1 格余量取 13。
@@ -139,6 +145,8 @@ export const MAX_PAD_RUN = 13;
 export interface XPlan {
   /** 给定曲中时刻（含全曲前导的红刻）返回参考 X（音符列位置） */
   targetX(atRt: number): number;
+  /** 该时刻是否有多条独立音轨同时落音且处于同步距离窗口内 */
+  isSynchronized(atRt: number): boolean;
 }
 
 /**
@@ -303,7 +311,8 @@ export function buildTrack(opts: BuildTrackOptions): {
       warnings.push({ code: 'OUT_OF_RANGE', midi: n.midi, action: 'drop' });
       continue;
     }
-    if (m.degraded) {
+    // 自动八度移调是用户明确选择的无提示策略；其余降级策略仍需在结果中说明。
+    if (m.degraded && (opts.outOfRange ?? 'warn') !== 'octave') {
       warnings.push({ code: 'OUT_OF_RANGE', midi: n.midi, action: opts.outOfRange ?? 'warn' });
     }
     const rt = gameTickToRedstone(n.tick);
@@ -438,9 +447,12 @@ export function buildTrack(opts: BuildTrackOptions): {
     // 只有 ≥4 音和弦才铺分线列（给外圈分支行供能），否则末级中继器直接接背后方块
     const tail = groupTailCells(g.notes.length);
     const noteXNatural = x + (first && rest > 0 ? 1 : 0) + restCells + (tail - 1);
-    const targetX = opts.plan ? opts.plan.targetX(g.rt + base) : noteXNatural;
+    const atRt = g.rt + base;
+    const targetX = opts.plan ? opts.plan.targetX(atRt) : noteXNatural;
     const deficit = Math.max(0, targetX - noteXNatural);
-    const padNeeded = Math.max(0, deficit - ALIGN_TOLERANCE_CELLS);
+    const tolerance =
+      opts.plan?.isSynchronized(atRt) === true ? 0 : ALIGN_TOLERANCE_CELLS;
+    const padNeeded = Math.max(0, deficit - tolerance);
     const slots = restCells + 1; // 槽 0 在组前中继器之前，其后每个中继器之后各一槽
     const pad = Math.min(padNeeded, slots * MAX_PAD_RUN);
     if (padNeeded > pad) {
@@ -543,6 +555,8 @@ export function buildTrack(opts: BuildTrackOptions): {
     taps,
   };
 
+  finalizeWireConnections(placements);
+
   return {
     track: {
       trackIndex: opts.trackIndex,
@@ -555,4 +569,55 @@ export function buildTrack(opts: BuildTrackOptions): {
     overflow,
     placed,
   };
+}
+
+/**
+ * 红石线的连接方向属于方块状态的一部分，不能只写 power。
+ *
+ * 手工放置红石粉时，Minecraft 会自动更新 north/east/south/west；
+ * litematic 直接写入不会经过这个更新，因此省略这些属性会让红石粉
+ * 加载后退化为四面无连接的小点，尤其会破坏四音以上和弦的分线列。
+ */
+function finalizeWireConnections(placements: BlockPlacement[]): void {
+  const key = (pos: Vec3): string => `${pos.x},${pos.y},${pos.z}`;
+  const byPos = new Map<string, BlockPlacement>();
+  for (const placement of placements) byPos.set(key(placement.pos), placement);
+
+  const directions = [
+    { name: 'north', dx: 0, dz: -1 },
+    { name: 'east', dx: 1, dz: 0 },
+    { name: 'south', dx: 0, dz: 1 },
+    { name: 'west', dx: -1, dz: 0 },
+  ] as const;
+
+  for (const wire of placements) {
+    if (wire.block !== 'minecraft:redstone_wire') continue;
+    const props: Record<string, string> = {
+      ...(wire.props ?? {}),
+      power: wire.props?.power ?? '0',
+    };
+    for (const direction of directions) {
+      const neighbor = byPos.get(
+        key({
+          x: wire.pos.x + direction.dx,
+          y: wire.pos.y,
+          z: wire.pos.z + direction.dz,
+        }),
+      );
+      props[direction.name] = wireConnection(neighbor);
+    }
+    wire.props = props;
+  }
+}
+
+function wireConnection(neighbor: BlockPlacement | undefined): 'none' | 'side' {
+  if (!neighbor) return 'none';
+  if (
+    neighbor.block === 'minecraft:redstone_wire' ||
+    neighbor.block === 'minecraft:repeater' ||
+    neighbor.block === 'minecraft:note_block'
+  ) {
+    return 'side';
+  }
+  return 'none';
 }

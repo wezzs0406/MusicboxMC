@@ -146,7 +146,7 @@ function applyOutOfRange(
   if (policy === 'clamp') {
     return pick(p < low ? low : high);
   }
-  // 'warn' 与 'octave' 都按整数八度平移回可用音域，保留音级
+  // 'warn' 与 'octave' 都按整数八度平移回可用音域，区别只在上层是否提示用户
   let shifted = p;
   const octaves = Math.ceil((low - p) / 12);
   shifted = p + 12 * octaves;

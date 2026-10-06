@@ -178,4 +178,57 @@ describe('音组归并与音域处理', () => {
     const nb = res.track.placements.filter((p) => p.block === 'minecraft:note_block').length;
     expect(nb).toBe(1);
   });
+
+  it('outOfRange=warn：超出音域时八度移调并提示', () => {
+    const res = buildTrack({
+      trackIndex: 0,
+      zBase: 0,
+      notes: [{ tick: 0, midi: 10 }],
+      config: cfg,
+      regions: DEFAULT_REGIONS,
+      resolve: () => 'minecraft:dirt',
+      outOfRange: 'warn',
+    });
+
+    expect(res.track.placements.some((p) => p.block === 'minecraft:note_block')).toBe(true);
+    expect(res.warnings).toContainEqual({
+      code: 'OUT_OF_RANGE',
+      midi: 10,
+      action: 'warn',
+    });
+  });
+
+  it('outOfRange=octave：超出音域时八度移调但不产生普通告警', () => {
+    const res = buildTrack({
+      trackIndex: 0,
+      zBase: 0,
+      notes: [{ tick: 0, midi: 10 }],
+      config: cfg,
+      regions: DEFAULT_REGIONS,
+      resolve: () => 'minecraft:dirt',
+      outOfRange: 'octave',
+    });
+
+    expect(res.track.placements.some((p) => p.block === 'minecraft:note_block')).toBe(true);
+    expect(res.warnings.some((w) => w.code === 'OUT_OF_RANGE')).toBe(false);
+  });
+
+  it('outOfRange=clamp：超出音域时改用最近可用音并提示', () => {
+    const res = buildTrack({
+      trackIndex: 0,
+      zBase: 0,
+      notes: [{ tick: 0, midi: 10 }],
+      config: cfg,
+      regions: DEFAULT_REGIONS,
+      resolve: () => 'minecraft:dirt',
+      outOfRange: 'clamp',
+    });
+
+    expect(res.track.placements.some((p) => p.block === 'minecraft:note_block')).toBe(true);
+    expect(res.warnings).toContainEqual({
+      code: 'OUT_OF_RANGE',
+      midi: 10,
+      action: 'clamp',
+    });
+  });
 });

@@ -162,6 +162,23 @@ describe('多轨空间对齐：X 由曲中时刻决定', () => {
     expect(res.warnings.some((w) => w.code === 'SPATIAL_DRIFT')).toBe(false);
   });
 
+  it('同刻两轨的自然位置在 10 格内时，音符列强制共用 X 轴', () => {
+    const res = layout(
+      song([
+        [5, 10, 15, 20].map((rt) => ({ tick: rt * 2, midi: 60 })),
+        [10, 20].map((rt) => ({ tick: rt * 2, midi: 67 })),
+      ]),
+      { config: cfg, regions: DEFAULT_REGIONS },
+    );
+    const a = noteXs(res, 0);
+    const b = noteXs(res, 1);
+    for (const rt of [10, 20]) {
+      expect(a.find((sample) => sample.rt === rt)?.x).toBe(
+        b.find((sample) => sample.rt === rt)?.x,
+      );
+    }
+  });
+
   it('单轨曲目不产生多余补齐（参考线就是它自己）', () => {
     const notes = [];
     for (let rt = 1; rt <= 50; rt += 5) notes.push({ tick: rt * 2, midi: 60 });

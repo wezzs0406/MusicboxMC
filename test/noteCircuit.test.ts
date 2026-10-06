@@ -182,6 +182,23 @@ describe('音符电路几何（新拓扑：音符盒内联主线，分支行中�
     expect(repeaters).toBe(4);
   });
 
+  it('红石线显式写入四向连接状态，避免投影加载后退化为小点', () => {
+    const res = layout(song([60, 64, 67, 69].map((midi) => ({ tick: 0, midi }))), {
+      config: cfg,
+      regions: DEFAULT_REGIONS,
+    });
+    const wire = res.tracks[0]!.placements.find(
+      (p) => p.block === 'minecraft:redstone_wire' && p.pos.z === 1,
+    );
+    expect(wire?.props).toMatchObject({
+      north: 'none',
+      east: 'side',
+      south: 'side',
+      west: 'none',
+      power: '0',
+    });
+  });
+
   it('投影是未通电的初始状态：红石粉一律 power=0，中继器/音符盒 powered=false', () => {
     for (const notes of CASES) {
       const res = layout(song(notes), { config: cfg, regions: DEFAULT_REGIONS });
