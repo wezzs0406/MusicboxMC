@@ -9,6 +9,9 @@ import { analyzeFile, generate, generateToFile, type GenerateOptions } from './s
  */
 const RENDERER_DIR = join(__dirname, '..', 'renderer');
 const PRELOAD_FILE = join(__dirname, '..', 'preload', 'index.js');
+const ICON_FILE = existsSync(join(__dirname, 'icon.png'))
+  ? join(__dirname, 'icon.png')
+  : join(__dirname, '..', '..', '..', 'icon.png');
 
 let win: BrowserWindow | null = null;
 
@@ -23,6 +26,7 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     title: 'MusicboxMC',
+    icon: ICON_FILE,
     backgroundColor: '#f5f5f2',
     autoHideMenuBar: true,
     webPreferences: {

@@ -19,3 +19,11 @@ if (!existsSync(from)) {
 mkdirSync(to, { recursive: true });
 cpSync(from, to, { recursive: true });
 console.log(`[copy-assets] ${from} → ${to}`);
+
+const iconFrom = join(root, 'icon.png');
+const iconTo = join(root, 'dist', 'src', 'main', 'icon.png');
+if (existsSync(iconFrom)) {
+  mkdirSync(dirname(iconTo), { recursive: true });
+  cpSync(iconFrom, iconTo);
+  console.log(`[copy-assets] ${iconFrom} → ${iconTo}`);
+}
