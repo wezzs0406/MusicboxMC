@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "MIDI → Minecraft 红石音乐 .litematic 投影生成器",
+  "license": "GPL-3.0-or-later",
   "main": "dist/src/main/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
